@@ -7,3 +7,7 @@ body {
     width: 1280px;
     background: black;
 }
+@font-face {
+    font-family: emulogic;
+    src: url('../fonts/emulogic.ttf')
+}

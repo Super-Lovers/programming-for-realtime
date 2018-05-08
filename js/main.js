@@ -22,6 +22,12 @@ var config = {
 
 var game = new Phaser.Game(config);
 var mario;
+var timer = 400;
+var timerText;
+var score = 100000;
+var scoreText;
+var coins = 0;
+var coinsText;
 
 // Static objects
 var floor, bricks, pipes;
@@ -32,20 +38,57 @@ var isOnFloor = false;
 var keyW, keyA, keyD;
 
 function preload() {
-    this.load.image('tiles', 'assets/tilemaps/tileset.png')
+    // UI
+    this.load.image('coins', 'assets/ui/coins-collected.png');
+
+    // Tileset map
+    this.load.image('tiles', 'assets/tilemaps/tileset.png');
     this.load.tilemapTiledJSON('map', 'assets/tilemaps/map.json');
 
     // Character mario spritesheet
     this.load.spritesheet('mario', 'assets/spritesheets/mario2.png', {
-        frameWidth: 73,
-        frameHeight: 72,
+        frameWidth: 45,
+        frameHeight: 48,
         startFrame: 0,
         endFrame: 5,
-        spacing: 4
+        spacing: 6
     });
 }
 
 function create() {
+    // Setup of the user interface
+    // SCORE
+    scoreText = this.add.text(130, 32, 'MARIO\n' + `${score}`)
+    .setFontFamily('emulogic')
+    .setFontSize(24).setColor('#ffffff');
+
+    // COINS COLLECTED
+    this.add.sprite(460, 62, 'coins');
+    coinsText = this.add.text(480, 56, 'x' + ` ${coins}`)
+    .setFontFamily('emulogic')
+    .setFontSize(24).setColor('#ffffff');
+
+    // WORLD
+    this.add.text(730, 32, 'WORLD\n 1-1')
+    .setFontFamily('emulogic')
+    .setFontSize(24).setColor('#ffffff');
+
+    // TIMER
+    timerText = this.add.text(1030, 32, 'TIME\n' + ` ${timer}`)
+    .setFontFamily('emulogic')
+    .setFontSize(24).setColor('#ffffff');
+
+    // Begin the timer and update it every second until it reaches zero
+    this.time.addEvent({
+        delay: 1000,
+        callback: function() {
+            timer--;
+            timerText.setText('TIME\n' + ` ${timer}`);   
+        },
+        callbackScope: this,
+        repeat: 400
+    });
+
     // Creating the tileset of layers from Tiled
     var map = this.make.tilemap({
         key: 'map'
@@ -121,9 +164,7 @@ function update() {
         mario.body.setVelocityY(-650);
         
         mario.anims.play('marioJumpingAnimation', 0);
-    }
-
-    if (keyD.isDown) {
+    } else if (keyD.isDown) {
         // Increase the player's velocity to move right
         if (mario.body.velocity.x < 270) {
             mario.body.velocity.x += 50;
