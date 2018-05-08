@@ -71,9 +71,6 @@ function create() {
     // Prevent the player from leaving the camera
     mario.setCollideWorldBounds(true);
 
-    // Enable physics collision with the layers
-    // this.physics.add.collider(mario, [floor, bricks, pipes]);
-
     // Creating the animations
     var idle = {
         key: 'marioIdleAnimation',
@@ -119,17 +116,11 @@ function update() {
     this.physics.world.collide(mario, bricks);
     this.physics.world.collide(mario, pipes);
 
-    if (mario.body.velocity.y == 0 || mario.body.velocity.y < 0) {
-        keyW.enabled = true;
-    } else {
-        keyW.enabled = false;
-    }
-
-    if (keyW.isDown) {
+    if (keyW.isDown && mario.body.blocked.down) {
         // Increase the player's velocity to move right
-        mario.body.setVelocityY(-550);
-
-        mario.anims.play('marioJumpingAnimation', 1);
+        mario.body.setVelocityY(-650);
+        
+        mario.anims.play('marioJumpingAnimation', 0);
     }
 
     if (keyD.isDown) {
