@@ -5,11 +5,21 @@ var score = 100000;
 var scoreText;
 var coins = 0;
 var coinsText;
+var coinsImage;
+var worldText;
 
 // Static objects
-var floor, bricks, pipes;
+var floor, bricks, pipes, mushrooms;
 
 var isOnFloor = false;
+var playerCamera;
+
+// UI coordinates for them to follow the camera
+var scorePositionX;
+var coinsPositionX;
+var timerPositionX;
+var worldPositionX;
+var coinsImagePositionX;
 
 // Key codes
 var keyW, keyA, keyD;
@@ -47,13 +57,13 @@ var Main = new Phaser.Class({
             .setFontSize(24).setColor('#ffffff');
 
         // COINS COLLECTED
-        this.add.sprite(460, 62, 'coins');
+        coinsImage = this.add.sprite(460, 62, 'coins');
         coinsText = this.add.text(480, 56, 'x' + ` ${coins}`)
             .setFontFamily('emulogic')
             .setFontSize(24).setColor('#ffffff');
 
         // WORLD
-        this.add.text(730, 32, 'WORLD\n 1-1')
+        worldText = this.add.text(730, 32, 'WORLD\n 1-1')
             .setFontFamily('emulogic')
             .setFontSize(24).setColor('#ffffff');
 
@@ -83,19 +93,20 @@ var Main = new Phaser.Class({
         var water = map.createStaticLayer('water', tiles, 0, 0);
         bricks = map.createStaticLayer('bricks', tiles, 0, 0);
         pipes = map.createStaticLayer('pipe', tiles, 0, 0);
-        var mushrooms = map.createStaticLayer('mushrooms', tiles, 0, 0);
+        mushrooms = map.createStaticLayer('mushrooms', tiles, 0, 0);
 
         // Setting which tiles on the map should be enabled for collision
         floor.setCollisionBetween(1, 1);
         bricks.setCollisionBetween(2, 2);
         pipes.setCollisionBetween(265, 299);
+        mushrooms.setCollisionBetween(25, 25);
 
         // Adding the character to the game
         // mario = this.add.sprite(256, 604, 'mario', 0);
-        mario = this.physics.add.sprite(256, 564, 'mario');
+        mario = this.physics.add.sprite(256, 564, 'mario').setOrigin(0.5, 0.5);
 
         // Prevent the player from leaving the camera
-        mario.setCollideWorldBounds(true);
+        // mario.setCollideWorldBounds(true);
 
         // Creating the animations
         var idle = {
@@ -135,13 +146,34 @@ var Main = new Phaser.Class({
         keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+    
+        playerCamera = this.cameras.main.setSize(1280, 768);
     },
 
     update() {
+        // Update the UI's positioning when the camera moves
+        // using new variables that calculate the position relative
+        // to the player's position in the world
+        scorePositionX = Math.floor(mario.x - 510);
+        coinsPositionX = Math.floor(mario.x - 180);
+        timerPositionX = Math.floor(mario.x + 390);
+        worldPositionX = Math.floor(mario.x + 90);
+        coinsImagePositionX = Math.floor(mario.x - 200);
+        scoreText.setPosition(scorePositionX, 32);
+        coinsText.setPosition(coinsPositionX, 56);
+        timerText.setPosition(timerPositionX, 32);
+        worldText.setPosition(worldPositionX, 32);
+        coinsImage.x = coinsImagePositionX;
+
+        // Making the camera follow the play
+
         this.physics.world.collide(mario, floor);
         this.physics.world.collide(mario, bricks);
         this.physics.world.collide(mario, pipes);
+        this.physics.world.collide(mario, mushrooms);
 
+        var playerPosition = Math.floor(mario.x - 640);
+        playerCamera.scrollX = playerPosition;
         if (keyW.isDown && mario.body.blocked.down) {
             // Increase the player's velocity to move right
             mario.body.setVelocityY(-650);
@@ -190,7 +222,7 @@ var config = {
         default: 'arcade',
         arcade: {
             gravity: {
-                y: 880
+                y: 950
             }
         }
     },
