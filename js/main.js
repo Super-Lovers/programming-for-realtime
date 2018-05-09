@@ -210,6 +210,14 @@ var Main = new Phaser.Class({
                 mario.anims.play('marioIdleAnimation', 1);
             }
         }
+
+        // Always change the scenes at the end of the update function
+        if (mario.y > 768) {
+            this.scene.start('GameOverLoseScene');
+        }
+        if (timer < 0 || timer == 0) {
+            this.scene.start('GameOverTimeScene');
+        }
     }
 });
 
