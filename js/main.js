@@ -1,7 +1,7 @@
 var mario;
 var timer = 400;
 var timerText;
-var score = 100000;
+var score = 0;
 var scoreText;
 var coins = 0;
 var coinsText;
@@ -21,6 +21,15 @@ var timerPositionX;
 var worldPositionX;
 var coinsImagePositionX;
 
+// Consumables
+var mushroom;
+var mushroomTiles = [
+    [512, 512],
+    [1024, 320],
+    [1728, 320]
+]
+var mushroomTilesGroup;
+
 // Key codes
 var keyW, keyA, keyD;
 var Main = new Phaser.Class({
@@ -34,6 +43,8 @@ var Main = new Phaser.Class({
     preload() {
         // UI
         this.load.image('coins', 'assets/ui/coins-collected.png');
+        this.load.image('powerup', 'assets/bricks/powerups.png');
+        this.load.image('mushroom', 'assets/collectables/mushroom.png');
 
         // Tileset map
         this.load.image('tiles', 'assets/tilemaps/tileset.png');
@@ -108,6 +119,27 @@ var Main = new Phaser.Class({
         // Prevent the player from leaving the camera
         // mario.setCollideWorldBounds(true);
 
+
+        mushroomTilesGroup = this.physics.add.staticGroup({
+            key: 'powerup',
+            frameQuantity: 3,
+            immovable: true
+        });
+
+        var mushroomChildren = mushroomTilesGroup.getChildren();
+        for (var i = 0; i < mushroomChildren.length; i++) {
+            var x = mushroomTiles[i][0];
+            var y = mushroomTiles[i][1];
+
+            mushroomChildren[i].setPosition(x, y).setOrigin(1, 1);
+        }
+
+        mushroomTilesGroup.refresh();
+
+        function overlap() {
+            console.log('mhm');
+        }
+
         // Creating the animations
         var idle = {
             key: 'marioIdleAnimation',
@@ -165,12 +197,33 @@ var Main = new Phaser.Class({
         worldText.setPosition(worldPositionX, 32);
         coinsImage.x = coinsImagePositionX;
 
-        // Making the camera follow the play
+        var _this = this;
+        this.physics.world.collide(mario, mushroomTilesGroup, function(mario, powerup) {
+            // Generating the mushroom on top of the powerup when its hit
+            mushroom = _this.physics.add.sprite(powerup.x, powerup.y - 128, 'mushroom');
+            
+            // Updating mario's power level
+            score += 100;
+            scoreText.setText('MARIO\n' + `${score}`);
 
-        this.physics.world.collide(mario, floor);
-        this.physics.world.collide(mario, bricks);
-        this.physics.world.collide(mario, pipes);
-        this.physics.world.collide(mario, mushrooms);
+            // Making it so that the powerup is deactivated
+            powerup.setTint(0x878787);
+            mushroomTilesGroup.remove(powerup);
+
+            // After the shroom spawns, make it go right
+            mushroom.setVelocityX(Math.floor(150));
+
+            // and if the shroom is touched by the player then the shroom
+            // dissapears and the player is rewarded
+            _this.physics.add.overlap(mario, mushroom, function(mario, mushroom) {
+                mushroom.destroy();
+            });
+        });
+        
+        this.physics.world.collide([mario, mushroom], floor);
+        this.physics.world.collide([mario, mushroom], bricks);
+        this.physics.world.collide([mario, mushroom], pipes);
+        this.physics.world.collide([mario, mushroom], mushrooms);
 
         var playerPosition = Math.floor(mario.x - 640);
         playerCamera.scrollX = playerPosition;
@@ -212,7 +265,7 @@ var Main = new Phaser.Class({
         }
 
         // Always change the scenes at the end of the update function
-        if (mario.y > 768) {
+        if (mario.y > 1200) {
             this.scene.start('GameOverLoseScene');
         }
         if (timer < 0 || timer == 0) {
