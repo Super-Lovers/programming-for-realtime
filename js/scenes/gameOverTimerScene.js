@@ -1,6 +1,6 @@
 var GameOverTimerScene = new Phaser.Class({
     Extends: Phaser.Scene,
-    
+
     initialize: function GameOverTimerScene() {
         Phaser.Scene.call(this, {
             key: 'GameOverTimeScene'
@@ -15,9 +15,15 @@ var GameOverTimerScene = new Phaser.Class({
 
     create() {
         this.add.sprite(0, 0, 'background').setOrigin(0, 0);
-        
+
         // TIME UP
         this.add.text(640, 384, 'TIME UP')
+            .setFontFamily('emulogic')
+            .setFontSize(24)
+            .setColor('#ffffff')
+            .setOrigin(0.5, 0.5);
+
+        this.add.text(640, 424, 'You scored ' + `${score}` + ' points!')
             .setFontFamily('emulogic')
             .setFontSize(24)
             .setColor('#ffffff')

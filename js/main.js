@@ -1,5 +1,14 @@
+var start = false;
+var startGameLabel;
+var titleImage;
+var titleCredits;
+var leftArrow;
+var rightArrow;
+var visible = true;
+
 var mario;
 var timer = 400;
+var gameTimer;
 var timerText;
 var score = 0;
 var scoreText;
@@ -27,23 +36,33 @@ var isMushroomLive = false;
 var toggleDirection = false;
 var mushroom;
 var mushroomTiles = [
-    [512, 512],
-    [1024, 320],
-    [1728, 320]
+    [512 + (20 * 64), 512],
+    [1024+ (20 * 64), 320],
+    [1728+ (20 * 64), 320]
 ]
 var mushroomChildren;
 var mushroomTilesGroup;
 
 var coin;
+// We multiply by 64 because every tile takes 64 pixels of width
+// and using this metric, its much easier to calculate where to place
+// special objects such as coins and powerups for the player on the
+// tileset from Tiled.
 var coinsTiles = [
-    [128, 320],
-    [192, 320],
-    [256, 320],
-    [1152, 256],
-    [1472, 448],
-    [1536, 448],
-    [2176, 448],
-    [2240, 448],
+    [7 * 64, 7 * 64],
+    [8 * 64, 7 * 64],
+    [10 * 64, 7 * 64],
+    [11 * 64, 7 * 64],
+    [13 * 64, 7 * 64],
+    [14 * 64, 7 * 64],
+    [22 * 64, 320],
+    [23 * 64, 320],
+    [24 * 64, 320],
+    [38 * 64, 256],
+    [43 * 64, 448],
+    [44 * 64, 448],
+    [54 * 64, 448],
+    [55 * 64, 448],
 ];
 var coinsChildren;
 var coinsTilesGroup;
@@ -59,6 +78,8 @@ var Main = new Phaser.Class({
     },
 
     preload() {
+        this.load.image('titleImage', 'assets/main-menu/title.png');
+
         // UI
         this.load.image('coins', 'assets/ui/coins-collected.png');
         this.load.image('powerupsDisabled', 'assets/bricks/powerupsDisabled.png');
@@ -102,38 +123,44 @@ var Main = new Phaser.Class({
     },
 
     create() {
-        // Setup of the user interface
-        // SCORE
-        scoreText = this.add.text(130, 32, 'MARIO\n' + `${score}`)
+        titleCredits = this.add.text(640, 474, 'Made by Nikolay Ivanov - CMV1G - 376469')
             .setFontFamily('emulogic')
-            .setFontSize(24).setColor('#ffffff');
+            .setFontSize(17)
+            .setOrigin(0.5, 0.5)
+            .setColor('#FCBBAE');
 
-        // COINS COLLECTED
-        coinsImage = this.add.sprite(460, 62, 'coins');
-        coinsText = this.add.text(480, 56, 'x' + ` ${coins}`)
+        startGameLabel = this.add.text(640, 550, 'Press space to start')
             .setFontFamily('emulogic')
-            .setFontSize(24).setColor('#ffffff');
+            .setFontSize(26)
+            .setOrigin(0.5, 0.5);
 
-        // WORLD
-        worldText = this.add.text(730, 32, 'WORLD\n 1-1')
+        leftArrow = this.add.text(startGameLabel.x - startGameLabel.width / 2 - 30, 550, '>')
             .setFontFamily('emulogic')
-            .setFontSize(24).setColor('#ffffff');
+            .setFontSize(26)
+            .setOrigin(0.5, 0.5);
 
-        // TIMER
-        timerText = this.add.text(1030, 32, 'TIME\n' + ` ${timer}`)
+        rightArrow = this.add.text(startGameLabel.x + startGameLabel.width / 2 + 30, 550, '<')
             .setFontFamily('emulogic')
-            .setFontSize(24).setColor('#ffffff');
+            .setFontSize(26)
+            .setOrigin(0.5, 0.5);
 
-        // Begin the timer and update it every second until it reaches zero
+        // Notify the player to click space to start the game
         this.time.addEvent({
-            delay: 1000,
+            delay: 500,
             callback: function () {
-                timer--;
-                timerText.setText('TIME\n' + ` ${timer}`);
+                if (visible) {
+                    leftArrow.visible = false;
+                    rightArrow.visible = false;
+                    visible = false;
+                } else {
+                    leftArrow.visible = true;
+                    rightArrow.visible = true;
+                    visible = true;
+                }
             },
-            callbackScope: this,
-            repeat: 400
+            loop: true
         });
+
         // Creating the tileset of layers from Tiled
         var map = this.make.tilemap({
             key: 'map'
@@ -154,7 +181,7 @@ var Main = new Phaser.Class({
 
         // Adding the character to the game
         // mario = this.add.sprite(256, 604, 'mario', 0);
-        mario = this.physics.add.sprite(256, 564, 'mario').setOrigin(0.5, 0.5);
+        mario = this.physics.add.sprite(640, 564, 'mario').setOrigin(0.5, 0.5);
 
         // Prevent the player from leaving the camera
         // mario.setCollideWorldBounds(true);
@@ -184,7 +211,7 @@ var Main = new Phaser.Class({
 
         coinsTilesGroup = this.physics.add.staticGroup({
             key: 'coinsAnimation',
-            frameQuantity: 8,
+            frameQuantity: 14,
             immovable: true
         });
 
@@ -192,7 +219,7 @@ var Main = new Phaser.Class({
         for (var i = 0; i < coinsChildren.length; i++) {
             var x = coinsTiles[i][0];
             var y = coinsTiles[i][1];
-            
+
             // Creating a sprite that is animated and has a static
             // body to collide with the player
             coinsChildren[i].setPosition(x, y - 6).setOrigin(1, 1);
@@ -291,165 +318,219 @@ var Main = new Phaser.Class({
         keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
 
-        playerCamera = this.cameras.main.setSize(1280, 768);
+        // Setup of the user interface
+        // SCORE
+        scoreText = this.add.text(130, 32, 'mario\n' + `${score}`)
+            .setFontFamily('emulogic')
+            .setFontSize(24).setColor('#ffffff');
+
+        // COINS COLLECTED
+        coinsImage = this.add.sprite(440, 62, 'coins');
+        coinsText = this.add.text(460, 56, 'x' + ` ${coins}`)
+            .setFontFamily('emulogic')
+            .setFontSize(24).setColor('#ffffff');
+
+        // WORLD
+        worldText = this.add.text(730, 32, 'world\n 1-1')
+            .setFontFamily('emulogic')
+            .setFontSize(24).setColor('#ffffff');
+
+        // TIMER
+        timerText = this.add.text(1030, 32, 'time\n' + ` ${timer}`)
+            .setFontFamily('emulogic')
+            .setFontSize(24).setColor('#ffffff');
+
+        // Begin the timer and update it every second until it reaches zero
+        gameTimer = this.time.addEvent({
+            delay: 1000,
+            callback: function () {
+                timer--;
+                timerText.setText('time\n' + ` ${timer}`);
+            },
+            callbackScope: this,
+            repeat: 400
+        });
+
+        titleImage = this.add.image(640, 280, 'titleImage').setOrigin(0.5, 0.5);
     },
 
     update() {
-        // Update the UI's positioning when the camera moves
-        // using new variables that calculate the position relative
-        // to the player's position in the world
-        scorePositionX = Math.floor(mario.x - 510);
-        coinsPositionX = Math.floor(mario.x - 180);
-        timerPositionX = Math.floor(mario.x + 390);
-        worldPositionX = Math.floor(mario.x + 90);
-        coinsImagePositionX = Math.floor(mario.x - 200);
-        scoreText.setPosition(scorePositionX, 32);
-        coinsText.setPosition(coinsPositionX, 56);
-        timerText.setPosition(timerPositionX, 32);
-        worldText.setPosition(worldPositionX, 32);
-        coinsImage.x = coinsImagePositionX;
+        this.physics.world.collide([mario, mushroom], floor);
 
-        // We are using overlap because collide stops the movement
-        // while the former doesnt stop the player prematurely.
-        this.physics.world.overlap(mario, coinsTilesGroup, function(mario, coin) {
-            score += 200;
-            updateScore();
+        this.input.keyboard.on('keydown_SPACE', function () {
+            // Enabling the camera to follow the player
+            playerCamera = this.cameras.main.setSize(1280, 768);
 
-            coin.destroy();
-        })
+            // Hiding introduction objects
+            titleImage.destroy();
+            titleCredits.destroy();
+            startGameLabel.destroy();
+            leftArrow.destroy();
+            rightArrow.destroy();
 
-        var _this = this;
-        this.physics.world.collide(mario, mushroomTilesGroup, function (mario, powerups) {
-            isMushroomLive = true;
-            // Updating mario's power level
-            score += 100;
-            updateScore();
+            start = true;
+        }, this);
 
-            // Generating the mushroom on top of the powerups when its hit
-            mushroom = _this.physics.add.sprite(powerups.x, powerups.y - 128, 'mushroom');
+        if (start) {
+            // Update the UI's positioning when the camera moves
+            // using new variables that calculate the position relative
+            // to the player's position in the world
+            scorePositionX = Math.floor(mario.x - 510);
+            coinsPositionX = Math.floor(mario.x - 180);
+            timerPositionX = Math.floor(mario.x + 390);
+            worldPositionX = Math.floor(mario.x + 90);
+            coinsImagePositionX = Math.floor(mario.x - 200);
+            scoreText.setPosition(scorePositionX, 32);
+            coinsText.setPosition(coinsPositionX, 56);
+            timerText.setPosition(timerPositionX, 32);
+            worldText.setPosition(worldPositionX, 32);
+            coinsImage.x = coinsImagePositionX;
 
-            // Making it so that the powerups is deactivated
-            powerups.setTexture('powerupsDisabled');
-            mushroomTilesGroup.remove(powerups);
-            powerups.anims.stop();
-
-            // After the shroom spawns, make it go right
-             mushroom.body.velocity.x += Math.floor(125);
-
-            // and if the shroom is touched by the player then the shroom
-            // dissapears and the player is rewarded
-            _this.physics.add.overlap(mario, mushroom, function (mario, mushroom) {
-                bigMario = true;
-
-                // Updating mario's power level
-                score += 1000;
+            // We are using overlap because collide stops the movement
+            // while the former doesnt stop the player prematurely.
+            this.physics.world.overlap(mario, coinsTilesGroup, function (mario, coin) {
+                score += 200;
                 updateScore();
 
-                mario.setTexture('marioBig').setOrigin(0.21, 0.21);
-
-                // Bugfix for falling to your death after
-                // you change the size and fall through the tiles
-                mario.y -= Math.floor(109 / 2);
-                mario.setSize(56, 109);
-
-                mushroom.destroy();
-                isMushroomLive = false;
+                coins++;
+                coinsText.setText('x' + ` ${coins}`);
+                coin.destroy();
             });
 
-            if (score >= 100 && score < 1000) {
-                scoreText.setText('MARIO\n' + '000' + `${score}`);
-            } else if (score >= 1000 && score < 10000) {
+            var _this = this;
+            this.physics.world.collide(mario, mushroomTilesGroup, function (mario, powerups) {
+                isMushroomLive = true;
+                // Updating mario's power level
+                score += 100;
+                updateScore();
+
+                // Generating the mushroom on top of the powerups when its hit
+                mushroom = _this.physics.add.sprite(powerups.x, powerups.y - 128, 'mushroom');
+
+                // Making it so that the powerups is deactivated
+                powerups.setTexture('powerupsDisabled');
+                mushroomTilesGroup.remove(powerups);
+                powerups.anims.stop();
+
+                // After the shroom spawns, make it go right
+                mushroom.body.velocity.x += Math.floor(125);
+
+                // and if the shroom is touched by the player then the shroom
+                // dissapears and the player is rewarded
+                _this.physics.add.overlap(mario, mushroom, function (mario, mushroom) {
+                    bigMario = true;
+
+                    // Updating mario's power level
+                    score += 1000;
+                    updateScore();
+
+                    mario.setTexture('marioBig').setOrigin(0.21, 0.21);
+
+                    // Bugfix for falling to your death after
+                    // you change the size and fall through the tiles
+                    mario.y -= Math.floor(109 / 2);
+                    mario.setSize(56, 109);
+
+                    mushroom.destroy();
+                    isMushroomLive = false;
+                });
+
+                if (score >= 100 && score < 1000) {
+                    scoreText.setText('MARIO\n' + '000' + `${score}`);
+                } else if (score >= 1000 && score < 10000) {
                     scoreText.setText('MARIO\n' + '00' + `${score}`);
-            } else if (score >= 10000 && score < 100000) {
-                scoreText.setText('MARIO\n' + '0' + `${score}`);
-            } else {
-                scoreText.setText('MARIO\n' + `${score}`);
-            }
-        });
-
-
-        this.physics.world.collide([mario, mushroom], floor);
-        this.physics.world.collide([mario, mushroom], bricks);
-        this.physics.world.collide(mario, pipes);
-        if (isMushroomLive) {
-            this.physics.world.collide(mushroom, pipes, function () {
-                if (toggleDirection == false) {
-                    mushroom.body.velocity.x -= Math.floor(125);
-                    toggleDirection = true;
+                } else if (score >= 10000 && score < 100000) {
+                    scoreText.setText('MARIO\n' + '0' + `${score}`);
                 } else {
-                    mushroom.setVelocityX(Math.floor(150));
-                    mushroom.body.velocity.x += Math.floor(125);
-                    toggleDirection = false;
+                    scoreText.setText('MARIO\n' + `${score}`);
                 }
             });
-        }
-        this.physics.world.collide([mario, mushroom], mushrooms);
 
-        var playerPosition = Math.floor(mario.x - 640);
-        playerCamera.scrollX = playerPosition;
-        if (keyW.isDown && mario.body.blocked.down) {
-            // Increase the player's velocity to move right
-            mario.body.setVelocityY(-650);
+            this.physics.world.collide([mario, mushroom], bricks);
+            this.physics.world.collide(mario, pipes);
+            if (isMushroomLive) {
+                this.physics.world.collide(mushroom, pipes, function () {
+                    if (toggleDirection == false) {
+                        mushroom.body.velocity.x -= Math.floor(125);
+                        toggleDirection = true;
+                    } else {
+                        mushroom.setVelocityX(Math.floor(150));
+                        mushroom.body.velocity.x += Math.floor(125);
+                        toggleDirection = false;
+                    }
+                });
+            }
+            this.physics.world.collide([mario, mushroom], mushrooms);
 
-            if (bigMario == true) {
-                mario.anims.play('marioBigJumpingAnimation', 0);
+            var playerPosition = Math.floor(mario.x - 640);
+            playerCamera.scrollX = playerPosition;
+            if (keyW.isDown && mario.body.blocked.down) {
+                // Increase the player's velocity to move right
+                mario.body.setVelocityY(-650);
+
+                if (bigMario == true) {
+                    mario.anims.play('marioBigJumpingAnimation', 0);
+                } else {
+                    mario.anims.play('marioJumpingAnimation', 0);
+                }
+            } else if (keyD.isDown) {
+                // Increase the player's velocity to move right
+                if (mario.body.velocity.x < 270) {
+                    mario.body.velocity.x += 50;
+                } else {
+                    mario.body.velocity.x = 270;
+                }
+
+                mario.flipX = false;
+                if (bigMario == true) {
+                    mario.anims.play('marioBigWalkingAnimation', 1);
+                } else {
+                    mario.anims.play('marioWalkingAnimation', 1);
+                }
+            } else if (keyA.isDown) {
+                if (mario.body.velocity.x > -270) {
+                    mario.body.velocity.x -= 50;
+                } else {
+                    mario.body.velocity.x = -270;
+                }
+
+                mario.flipX = true;
+                if (bigMario == true) {
+                    mario.anims.play('marioBigWalkingAnimation', 1);
+                } else {
+                    mario.anims.play('marioWalkingAnimation', 1);
+                }
             } else {
-                mario.anims.play('marioJumpingAnimation', 0);
-            }
-        } else if (keyD.isDown) {
-            // Increase the player's velocity to move right
-            if (mario.body.velocity.x < 270) {
-                mario.body.velocity.x += 50;
-            } else {
-                mario.body.velocity.x = 270;
+                // Gradually slow down the player before stopping
+                if (mario.body.velocity.x < 0) {
+                    mario.body.velocity.x += 20;
+
+                    if (bigMario == true) {
+                        mario.anims.play('marioBigIdleAnimation', 1);
+                    } else {
+                        mario.anims.play('marioIdleAnimation', 1);
+                    }
+                } else if (mario.body.velocity.x > 0) {
+                    mario.body.velocity.x -= 20;
+
+                    if (bigMario == true) {
+                        mario.anims.play('marioBigIdleAnimation', 1);
+                    } else {
+                        mario.anims.play('marioIdleAnimation', 1);
+                    }
+                }
             }
 
-            mario.flipX = false;
-            if (bigMario == true) {
-                mario.anims.play('marioBigWalkingAnimation', 1);
-            } else {
-                mario.anims.play('marioWalkingAnimation', 1);
+            // Always change the scenes at the end of the update function
+            if (mario.y > 1200) {
+                this.scene.start('GameOverLoseScene');
             }
-        } else if (keyA.isDown) {
-            if (mario.body.velocity.x > -270) {
-                mario.body.velocity.x -= 50;
-            } else {
-                mario.body.velocity.x = -270;
-            }
-
-            mario.flipX = true;
-            if (bigMario == true) {
-                mario.anims.play('marioBigWalkingAnimation', 1);
-            } else {
-                mario.anims.play('marioWalkingAnimation', 1);
+            if (timer < 0 || timer == 0) {
+                this.scene.start('GameOverTimeScene');
             }
         } else {
-            // Gradually slow down the player before stopping
-            if (mario.body.velocity.x < 0) {
-                mario.body.velocity.x += 20;
-
-                if (bigMario == true) {
-                    mario.anims.play('marioBigIdleAnimation', 1);
-                } else {
-                    mario.anims.play('marioIdleAnimation', 1);
-                }
-            } else if (mario.body.velocity.x > 0) {
-                mario.body.velocity.x -= 20;
-
-                if (bigMario == true) {
-                    mario.anims.play('marioBigIdleAnimation', 1);
-                } else {
-                    mario.anims.play('marioIdleAnimation', 1);
-                }
-            }
-        }
-
-        // Always change the scenes at the end of the update function
-        if (mario.y > 1200) {
-            this.scene.start('GameOverLoseScene');
-        }
-        if (timer < 0 || timer == 0) {
-            this.scene.start('GameOverTimeScene');
+            // Don't start the timer until the player is ready
+            timer = 401;
         }
     },
 });
@@ -458,7 +539,7 @@ var config = {
     type: Phaser.AUTO,
     width: 1280,
     height: 768,
-    backgroundColor: '#6b8cff',
+    backgroundColor: '#5B93F5',
     physics: {
         default: 'arcade',
         arcade: {
@@ -478,7 +559,7 @@ function updateScore() {
     if (score >= 100 && score < 1000) {
         scoreText.setText('MARIO\n' + '000' + `${score}`);
     } else if (score >= 1000 && score < 10000) {
-            scoreText.setText('MARIO\n' + '00' + `${score}`);
+        scoreText.setText('MARIO\n' + '00' + `${score}`);
     } else if (score >= 10000 && score < 100000) {
         scoreText.setText('MARIO\n' + '0' + `${score}`);
     } else {

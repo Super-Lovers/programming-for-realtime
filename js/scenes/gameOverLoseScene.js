@@ -1,6 +1,6 @@
 var GameOverLoseScene = new Phaser.Class({
     Extends: Phaser.Scene,
-    
+
     initialize: function GameOverLoseScene() {
         Phaser.Scene.call(this, {
             key: 'GameOverLoseScene'
@@ -17,7 +17,13 @@ var GameOverLoseScene = new Phaser.Class({
         this.add.sprite(0, 0, 'background').setOrigin(0, 0);
 
         // GAME OVER
-        this.add.text(640, 384, 'GAME OVER')
+        this.add.text(640, 384, 'Game over')
+            .setFontFamily('emulogic')
+            .setFontSize(24)
+            .setColor('#ffffff')
+            .setOrigin(0.5, 0.5);
+
+        this.add.text(640, 424, 'You scored ' + `${score}` + ' points!')
             .setFontFamily('emulogic')
             .setFontSize(24)
             .setColor('#ffffff')
