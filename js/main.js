@@ -24,7 +24,6 @@ var coinsImagePositionX;
 // Consumables
 var bigMario = false;
 var isMushroomLive = false;
-var powerupFlashSprite = [];
 var toggleDirection = false;
 var mushroom;
 var mushroomTiles = [
@@ -34,6 +33,20 @@ var mushroomTiles = [
 ]
 var mushroomChildren;
 var mushroomTilesGroup;
+
+var coin;
+var coinsTiles = [
+    [128, 320],
+    [192, 320],
+    [256, 320],
+    [1152, 256],
+    [1472, 448],
+    [1536, 448],
+    [2176, 448],
+    [2240, 448],
+];
+var coinsChildren;
+var coinsTilesGroup;
 
 // Key codes
 var keyW, keyA, keyD;
@@ -70,9 +83,18 @@ var Main = new Phaser.Class({
             endFrame: 5,
             spacing: 2
         });
+
+        // Consumables animation spritesheets
         this.load.spritesheet('powerupsAnimation', 'assets/spritesheets/powerupsAnimation.png', {
             frameWidth: 64,
             frameHeight: 64,
+            startFrame: 0,
+            endFrame: 2,
+            spacing: 0
+        });
+        this.load.spritesheet('coinsAnimation', 'assets/spritesheets/coinsAnimation.png', {
+            frameWidth: 64,
+            frameHeight: 56,
             startFrame: 0,
             endFrame: 2,
             spacing: 0
@@ -148,6 +170,37 @@ var Main = new Phaser.Class({
 
         this.anims.create(powerupsFlash);
 
+        var coinsFlash = {
+            key: 'coinsFlashAnimation',
+            frames: this.anims.generateFrameNumbers('coinsAnimation', {
+                start: 0,
+                end: 2
+            }),
+            frameRate: 6,
+            repeat: -1
+        };
+
+        this.anims.create(coinsFlash);
+
+        coinsTilesGroup = this.physics.add.staticGroup({
+            key: 'coinsAnimation',
+            frameQuantity: 8,
+            immovable: true
+        });
+
+        coinsChildren = coinsTilesGroup.getChildren();
+        for (var i = 0; i < coinsChildren.length; i++) {
+            var x = coinsTiles[i][0];
+            var y = coinsTiles[i][1];
+            
+            // Creating a sprite that is animated and has a static
+            // body to collide with the player
+            coinsChildren[i].setPosition(x, y - 6).setOrigin(1, 1);
+            coinsChildren[i].anims.play('coinsFlashAnimation', 0);
+        }
+
+        coinsTilesGroup.refresh();
+
         mushroomTilesGroup = this.physics.add.staticGroup({
             key: 'powerupsAnimation',
             frameQuantity: 3,
@@ -194,6 +247,11 @@ var Main = new Phaser.Class({
             repeat: 1
         };
 
+        // Create an animation based on the walking and jumping configurations
+        this.anims.create(marioIdle);
+        this.anims.create(marioWalking);
+        this.anims.create(marioJumping);
+
         // Creating the animations for the bigger mario
         var marioBigIdle = {
             key: 'marioBigIdleAnimation',
@@ -223,11 +281,6 @@ var Main = new Phaser.Class({
             repeat: 1
         };
 
-        // Create an animation based on the walking and jumping configurations
-        this.anims.create(marioIdle);
-        this.anims.create(marioWalking);
-        this.anims.create(marioJumping);
-
         // Creating the animations for the bigger mario sprite
         this.anims.create([marioBigIdle]);
         this.anims.create(marioBigWalking);
@@ -255,6 +308,15 @@ var Main = new Phaser.Class({
         timerText.setPosition(timerPositionX, 32);
         worldText.setPosition(worldPositionX, 32);
         coinsImage.x = coinsImagePositionX;
+
+        // We are using overlap because collide stops the movement
+        // while the former doesnt stop the player prematurely.
+        this.physics.world.overlap(mario, coinsTilesGroup, function(mario, coin) {
+            score += 200;
+            updateScore();
+
+            coin.destroy();
+        })
 
         var _this = this;
         this.physics.world.collide(mario, mushroomTilesGroup, function (mario, powerups) {
