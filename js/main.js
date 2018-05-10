@@ -23,12 +23,14 @@ var coinsImagePositionX;
 
 // Consumables
 var bigMario = false;
+var isMushroomLive = false;
 var mushroom;
 var mushroomTiles = [
     [512, 512],
     [1024, 320],
     [1728, 320]
 ]
+var mushroomChildren;
 var mushroomTilesGroup;
 
 // Key codes
@@ -134,7 +136,7 @@ var Main = new Phaser.Class({
             immovable: true
         });
 
-        var mushroomChildren = mushroomTilesGroup.getChildren();
+        mushroomChildren = mushroomTilesGroup.getChildren();
         for (var i = 0; i < mushroomChildren.length; i++) {
             var x = mushroomTiles[i][0];
             var y = mushroomTiles[i][1];
@@ -209,10 +211,10 @@ var Main = new Phaser.Class({
         // Create an animation based on the walking and jumping configurations
         this.anims.create(marioIdle);
         this.anims.create(marioWalking);
-        this.anims.create(marioJumping);  
-        
+        this.anims.create(marioJumping);
+
         // Creating the animations for the bigger mario sprite
-        this.anims.create(marioBigIdle);
+        this.anims.create([marioBigIdle]);
         this.anims.create(marioBigWalking);
         this.anims.create(marioBigJumping);
 
@@ -220,7 +222,7 @@ var Main = new Phaser.Class({
         keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-    
+
         playerCamera = this.cameras.main.setSize(1280, 768);
     },
 
@@ -240,14 +242,11 @@ var Main = new Phaser.Class({
         coinsImage.x = coinsImagePositionX;
 
         var _this = this;
-        this.physics.world.collide(mario, mushroomTilesGroup, function(mario, powerup) {
-            bigMario = true;
-
+        this.physics.world.collide(mario, mushroomTilesGroup, function (mario, powerup) {
+            isMushroomLive = true;
             // Generating the mushroom on top of the powerup when its hit
             mushroom = _this.physics.add.sprite(powerup.x, powerup.y - 128, 'mushroom');
-            
-            mario.setTexture('marioBig').setOrigin(0.21, 0.21);
-            mario.setSize(56, 109);
+
             // Updating mario's power level
             score += 100;
             scoreText.setText('MARIO\n' + `${score}`);
@@ -261,11 +260,31 @@ var Main = new Phaser.Class({
 
             // and if the shroom is touched by the player then the shroom
             // dissapears and the player is rewarded
-            _this.physics.add.overlap(mario, mushroom, function(mario, mushroom) {
+            _this.physics.add.overlap(mario, mushroom, function (mario, mushroom) { 
+                bigMario = true;
+
+                mario.setTexture('marioBig').setOrigin(0.21, 0.21);
+                
+                // Bugfix for falling to your death after
+                // you change the size and fall through the tiles
+                mario.y -= 109;
+                mario.setSize(56, 109);
+                
                 mushroom.destroy();
+                isMushroomLive = false;
             });
         });
-        
+
+            if (isMushroomLive) {
+                if (mushroom.body.blocked.right) {
+                    console.log('mhm');
+                    mushroom.setVelocityX(Math.floor(-150));
+                } else if (mushroom.body.blocked.left){
+                    console.log('mhmne');
+                    mushroom.setVelocityX(Math.floor(150));
+                }
+            }
+
         this.physics.world.collide([mario, mushroom], floor);
         this.physics.world.collide([mario, mushroom], bricks);
         this.physics.world.collide([mario, mushroom], pipes);
