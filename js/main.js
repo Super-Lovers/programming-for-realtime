@@ -22,6 +22,7 @@ var worldPositionX;
 var coinsImagePositionX;
 
 // Consumables
+var bigMario = false;
 var mushroom;
 var mushroomTiles = [
     [512, 512],
@@ -51,12 +52,19 @@ var Main = new Phaser.Class({
         this.load.tilemapTiledJSON('map', 'assets/tilemaps/map.json');
 
         // Character mario spritesheet
-        this.load.spritesheet('mario', 'assets/spritesheets/mario2.png', {
+        this.load.spritesheet('mario', 'assets/spritesheets/mario.png', {
             frameWidth: 45,
             frameHeight: 48,
             startFrame: 0,
             endFrame: 5,
             spacing: 6
+        });
+        this.load.spritesheet('marioBig', 'assets/spritesheets/marioBig.png', {
+            frameWidth: 56,
+            frameHeight: 109,
+            startFrame: 0,
+            endFrame: 5,
+            spacing: 2
         });
     },
 
@@ -140,8 +148,8 @@ var Main = new Phaser.Class({
             console.log('mhm');
         }
 
-        // Creating the animations
-        var idle = {
+        // Creating the animations for the smaller mario
+        var marioIdle = {
             key: 'marioIdleAnimation',
             frames: this.anims.generateFrameNumbers('mario', {
                 start: 0,
@@ -149,8 +157,8 @@ var Main = new Phaser.Class({
             }),
             frameRate: 6,
             repeat: 1
-        }
-        var walking = {
+        };
+        var marioWalking = {
             key: 'marioWalkingAnimation',
             frames: this.anims.generateFrameNumbers('mario', {
                 start: 0,
@@ -158,8 +166,8 @@ var Main = new Phaser.Class({
             }),
             frameRate: 6,
             repeat: -1
-        }
-        var jumping = {
+        };
+        var marioJumping = {
             key: 'marioJumpingAnimation',
             frames: this.anims.generateFrameNumbers('mario', {
                 start: 4,
@@ -167,12 +175,46 @@ var Main = new Phaser.Class({
             }),
             frameRate: 6,
             repeat: 1
-        }
+        };
+
+        // Creating the animations for the bigger mario
+        var marioBigIdle = {
+            key: 'marioBigIdleAnimation',
+            frames: this.anims.generateFrameNumbers('marioBig', {
+                start: 0,
+                end: 0
+            }),
+            frameRate: 6,
+            repeat: 1
+        };
+        var marioBigWalking = {
+            key: 'marioBigWalkingAnimation',
+            frames: this.anims.generateFrameNumbers('marioBig', {
+                start: 1,
+                end: 3
+            }),
+            frameRate: 6,
+            repeat: -1
+        };
+        var marioBigJumping = {
+            key: 'marioBigJumpingAnimation',
+            frames: this.anims.generateFrameNumbers('marioBig', {
+                start: 5,
+                end: 5
+            }),
+            frameRate: 6,
+            repeat: 1
+        };
 
         // Create an animation based on the walking and jumping configurations
-        this.anims.create(idle);
-        this.anims.create(walking);
-        this.anims.create(jumping);
+        this.anims.create(marioIdle);
+        this.anims.create(marioWalking);
+        this.anims.create(marioJumping);  
+        
+        // Creating the animations for the bigger mario sprite
+        this.anims.create(marioBigIdle);
+        this.anims.create(marioBigWalking);
+        this.anims.create(marioBigJumping);
 
         // Keys for character animations
         keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
@@ -199,9 +241,13 @@ var Main = new Phaser.Class({
 
         var _this = this;
         this.physics.world.collide(mario, mushroomTilesGroup, function(mario, powerup) {
+            bigMario = true;
+
             // Generating the mushroom on top of the powerup when its hit
             mushroom = _this.physics.add.sprite(powerup.x, powerup.y - 128, 'mushroom');
             
+            mario.setTexture('marioBig').setOrigin(0.21, 0.21);
+            mario.setSize(56, 109);
             // Updating mario's power level
             score += 100;
             scoreText.setText('MARIO\n' + `${score}`);
@@ -231,7 +277,11 @@ var Main = new Phaser.Class({
             // Increase the player's velocity to move right
             mario.body.setVelocityY(-650);
 
-            mario.anims.play('marioJumpingAnimation', 0);
+            if (bigMario == true) {
+                mario.anims.play('marioBigJumpingAnimation', 1);
+            } else {
+                mario.anims.play('marioJumpingAnimation', 1);
+            }
         } else if (keyD.isDown) {
             // Increase the player's velocity to move right
             if (mario.body.velocity.x < 270) {
@@ -241,7 +291,11 @@ var Main = new Phaser.Class({
             }
 
             mario.flipX = false;
-            mario.anims.play('marioWalkingAnimation', 1);
+            if (bigMario == true) {
+                mario.anims.play('marioBigWalkingAnimation', 1);
+            } else {
+                mario.anims.play('marioWalkingAnimation', 1);
+            }
         } else if (keyA.isDown) {
             if (mario.body.velocity.x > -270) {
                 mario.body.velocity.x -= 50;
@@ -250,17 +304,29 @@ var Main = new Phaser.Class({
             }
 
             mario.flipX = true;
-            mario.anims.play('marioWalkingAnimation', 1);
+            if (bigMario == true) {
+                mario.anims.play('marioBigWalkingAnimation', 1);
+            } else {
+                mario.anims.play('marioWalkingAnimation', 1);
+            }
         } else {
             // Gradually slow down the player before stopping
             if (mario.body.velocity.x < 0) {
                 mario.body.velocity.x += 20;
 
-                mario.anims.play('marioIdleAnimation', 1);
+                if (bigMario == true) {
+                    mario.anims.play('marioBigIdleAnimation', 1);
+                } else {
+                    mario.anims.play('marioIdleAnimation', 1);
+                }
             } else if (mario.body.velocity.x > 0) {
                 mario.body.velocity.x -= 20;
 
-                mario.anims.play('marioIdleAnimation', 1);
+                if (bigMario == true) {
+                    mario.anims.play('marioBigIdleAnimation', 1);
+                } else {
+                    mario.anims.play('marioIdleAnimation', 1);
+                }
             }
         }
 
