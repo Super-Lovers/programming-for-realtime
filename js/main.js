@@ -1,5 +1,8 @@
 var start = false;
+var stageClear = false;
 var killedByHostile = false;
+var startMusic = true;
+var backgroundMusic;
 var startGameLabel;
 var titleImage;
 var titleCredits;
@@ -20,7 +23,7 @@ var worldText;
 
 // Static objects
 var floor, bricks, pipes, mushrooms;
-var flag, pole, door;
+var flag, dropFlag, pole, door;
 var caughtPole = false;
 
 var isOnFloor = false;
@@ -104,6 +107,19 @@ var Main = new Phaser.Class({
         // Tileset map
         this.load.image('tiles', 'assets/tilemaps/tileset.png');
         this.load.tilemapTiledJSON('map', 'assets/tilemaps/map.json');
+
+        // Background music
+        this.load.audio('background-music', 'assets/audio/music/background-music.mp3');
+
+        // Sound effects
+        this.load.audio('coin', 'assets/audio/smb_coin.wav');
+        this.load.audio('powerup-appears', 'assets/audio/smb_powerup_appears.wav');
+        this.load.audio('powerup', 'assets/audio/smb_powerup.wav');
+        this.load.audio('stomp', 'assets/audio/smb_stomp.wav');
+        this.load.audio('jump', 'assets/audio/smb_jump-small.wav');
+        this.load.audio('jump-super', 'assets/audio/smb_jump-super.wav');
+        this.load.audio('powerdown', 'assets/audio/smb_powerdown.wav');
+        this.load.audio('flag', 'assets/audio/smb_flagpole.wav');
 
         // Character mario spritesheet
         this.load.spritesheet('mario', 'assets/spritesheets/mario.png', {
@@ -417,6 +433,9 @@ var Main = new Phaser.Class({
     },
 
     update() {
+        if (caughtPole == true) {
+            this.physics.world.collide(dropFlag, floor);
+        }
         this.physics.world.collide([mario, mushroom, goombaHostilesGroup], floor);
         this.physics.world.collide(goombaHostilesGroup, pipes, function (g, p) {
             if (g.body.blocked.left) {
@@ -441,6 +460,12 @@ var Main = new Phaser.Class({
         }, this);
 
         if (start) {
+            if (startMusic) {
+                backgroundMusic = this.sound.add('background-music');
+                backgroundMusic.play();
+                startMusic = false;
+            }
+            
             // Update the UI's positioning when the camera moves
             // using new variables that calculate the position relative
             // to the player's position in the world
@@ -458,6 +483,8 @@ var Main = new Phaser.Class({
             var _this = this;
             this.physics.world.collide(mario, goombaHostilesGroup, function (m, g) {
                 if (mario.body.touching.down) {
+                    _this.sound.add('stomp').play();
+
                     score += 100;
                     updateScore();
 
@@ -479,6 +506,7 @@ var Main = new Phaser.Class({
                         squashedRemains.destroy();
                     }, 600);
                 } else if (mario.body.touching.left || mario.body.touching.right || mario.body.touching.up) {
+                    _this.sound.add('powerdown').play();
                     if (bigMario) {
                         bigMario = false;
 
@@ -490,9 +518,13 @@ var Main = new Phaser.Class({
             });
 
             this.physics.world.overlap(mario, flag, function(m, f) {
-                f.setVelocityY(300);
-
                 if (!caughtPole) {
+                    _this.sound.play('flag');
+                    flag.destroy();
+
+                    dropFlag = _this.physics.add.sprite(67 * 64, 3 * 64, 'flag');
+                    dropFlag.setVelocityY(Math.floor(80));
+
                     // The player gets a pop-up of his earned points
                     var popup = _this.add.text(f.x - 70, f.y - 80, '5000')
                         .setFontFamily('emulogic')
@@ -512,6 +544,12 @@ var Main = new Phaser.Class({
 
             this.physics.world.overlap(mario, pole, function(m, p) {
                 if (!caughtPole) {
+                    _this.sound.play('flag');
+                    flag.destroy();
+
+                    dropFlag = _this.physics.add.sprite(67 * 64, 3 * 64, 'flag');
+                    dropFlag.setVelocityY(Math.floor(80));
+
                     // The player gets a pop-up of his earned points
                     var popup = _this.add.text(p.x - 70, p.y - 80, '2000')
                         .setFontFamily('emulogic')
@@ -527,14 +565,17 @@ var Main = new Phaser.Class({
 
                 caughtPole = true;
             });
+            this.physics.world.collide(flag, floor);
 
             this.physics.world.overlap(mario, door, function() {
-                killedByHostile = true;
+                stageClear = true;
             });
 
             // We are using overlap because collide stops the movement
             // while the former doesnt stop the player prematurely.
             this.physics.world.overlap(mario, coinsTilesGroup, function (mario, coin) {
+                _this.sound.add('coin').play();
+                
                 var popup = _this.add.text(coin.x - 70, coin.y - 80, '200')
                     .setFontFamily('emulogic')
                     .setFontSize(24).setColor('#ffffff');
@@ -553,6 +594,8 @@ var Main = new Phaser.Class({
 
             this.physics.world.collide(mario, mushroomTilesGroup, function (mario, powerups) {
                 if (mario.body.touching.up) {
+                    _this.sound.add('powerup-appears').play();
+
                     // The player gets a pop-up of his earned points
                     var popup = _this.add.text(powerups.x - 70, powerups.y - 94, '100')
                         .setFontFamily('emulogic')
@@ -580,7 +623,9 @@ var Main = new Phaser.Class({
 
                     // and if the shroom is touched by the player then the shroom
                     // dissapears and the player is rewarded
-                    _this.physics.add.overlap(mario, mushroom, function (mario, mushroom) {
+                    _this.physics.add.overlap(mario, mushroom, function (mario, mushroom) { 
+                        _this.sound.add('powerup').play();
+                        
                         bigMario = true;
 
                         // The player gets a pop-up of his earned points
@@ -639,16 +684,18 @@ var Main = new Phaser.Class({
                 mario.body.setVelocityY(Math.floor(-650));
 
                 if (bigMario == true) {
+                    _this.sound.add('jump-super').play();
                     mario.anims.play('marioBigJumpingAnimation', 0);
                 } else {
                     mario.anims.play('marioJumpingAnimation', 0);
+                    _this.sound.add('jump').play();
                 }
             } else if (keyD.isDown) {
                 // Increase the player's velocity to move right
                 if (mario.body.velocity.x < 270) {
-                    mario.body.velocity.x += 50;
+                    mario.body.velocity.x += Math.floor(50);
                 } else {
-                    mario.body.velocity.x = 270;
+                    mario.body.velocity.x = Math.floor(270);
                 }
 
                 mario.flipX = false;
@@ -659,9 +706,9 @@ var Main = new Phaser.Class({
                 }
             } else if (keyA.isDown) {
                 if (mario.body.velocity.x > -270) {
-                    mario.body.velocity.x -= 50;
+                    mario.body.velocity.x -= Math.floor(50);
                 } else {
-                    mario.body.velocity.x = -270;
+                    mario.body.velocity.x = Math.floor(-270);
                 }
 
                 mario.flipX = true;
@@ -673,7 +720,7 @@ var Main = new Phaser.Class({
             } else {
                 // Gradually slow down the player before stopping
                 if (mario.body.velocity.x < 0) {
-                    mario.body.velocity.x += 20;
+                    mario.body.velocity.x += Math.floor(20);
 
                     if (bigMario == true) {
                         mario.anims.play('marioBigIdleAnimation', 1);
@@ -681,7 +728,7 @@ var Main = new Phaser.Class({
                         mario.anims.play('marioIdleAnimation', 1);
                     }
                 } else if (mario.body.velocity.x > 0) {
-                    mario.body.velocity.x -= 20;
+                    mario.body.velocity.x -= Math.floor(20);
 
                     if (bigMario == true) {
                         mario.anims.play('marioBigIdleAnimation', 1);
@@ -693,13 +740,22 @@ var Main = new Phaser.Class({
 
             // Always change the scenes at the end of the update function
             if (mario.y > 1200) {
+                // Stop the background music so it doesnt go over
+                // to a different scene
+                backgroundMusic.stop();
                 this.scene.start('GameOverLoseScene');
             }
             if (timer < 0 || timer == 0) {
+                backgroundMusic.stop();
                 this.scene.start('GameOverTimeScene');
             }
             if (killedByHostile) {
+                backgroundMusic.stop();
                 this.scene.start('GameOverLoseScene');
+            }
+            if (stageClear) {
+                backgroundMusic.stop();
+                this.scene.start('GameWinScene');
             }
         } else {
             // Don't start the timer until the player is ready
@@ -709,6 +765,7 @@ var Main = new Phaser.Class({
 });
 
 var config = {
+    title: 'Super Mario Bros - NES version by Nikolay Ivanov',
     type: Phaser.AUTO,
     width: 1280,
     height: 768,
@@ -722,8 +779,8 @@ var config = {
             }
         }
     },
-    scene: [Main, GameOverLoseScene, GameOverTimerScene],
-    title: 'Super Mario Bros - NES version by Nikolay Ivanov'
+    scene: [Main, GameOverLoseScene, GameOverTimerScene, GameWinScene],
+    audio: { disableWebAudio: true }
 };
 
 var game = new Phaser.Game(config);

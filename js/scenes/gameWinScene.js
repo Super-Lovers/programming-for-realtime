@@ -1,9 +1,9 @@
-var GameOverLoseScene = new Phaser.Class({
+var GameWinScene = new Phaser.Class({
     Extends: Phaser.Scene,
 
-    initialize: function GameOverLoseScene() {
+    initialize: function GameWinScene() {
         Phaser.Scene.call(this, {
-            key: 'GameOverLoseScene'
+            key: 'GameWinScene'
         });
     },
 
@@ -14,18 +14,19 @@ var GameOverLoseScene = new Phaser.Class({
 
         // End-game audio
         this.load.audio('gameover', 'assets/audio/smb_gameover.wav');
+        this.load.audio('stageclear', 'assets/audio/smb_stage_clear.wav');
     },
 
     create() {
         var _this = this;
         setTimeout(function() {
-            _this.sound.add('gameover').play();
+            _this.sound.add('stageclear').play();
         }, 500);
 
         this.add.sprite(0, 0, 'background').setOrigin(0, 0);
 
         // GAME OVER
-        this.add.text(640, 384, 'Game over')
+        this.add.text(640, 384, 'You win')
             .setFontFamily('emulogic')
             .setFontSize(24)
             .setColor('#ffffff')
