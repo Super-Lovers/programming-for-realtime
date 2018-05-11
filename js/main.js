@@ -20,6 +20,8 @@ var worldText;
 
 // Static objects
 var floor, bricks, pipes, mushrooms;
+var flag, pole, door;
+var caughtPole = false;
 
 var isOnFloor = false;
 var playerCamera;
@@ -93,6 +95,11 @@ var Main = new Phaser.Class({
         this.load.image('coins', 'assets/ui/coins-collected.png');
         this.load.image('powerupsDisabled', 'assets/bricks/powerupsDisabled.png');
         this.load.image('mushroom', 'assets/collectables/mushroom.png');
+
+        // End-game sprites
+        this.load.image('flag', 'assets/ground/flag.png');
+        this.load.image('pole', 'assets/ground/flagPole.png');
+        this.load.image('door', 'assets/buildings/door.png');
 
         // Tileset map
         this.load.image('tiles', 'assets/tilemaps/tileset.png');
@@ -185,6 +192,10 @@ var Main = new Phaser.Class({
             key: 'map'
         });
 
+        // Adding the flag pole and flag
+        pole = this.physics.add.staticSprite(67.5 * 64, 6.5 * 64, 'pole');
+        flag = this.physics.add.staticSprite(67 * 64, 3 * 64, 'flag');
+
         var tiles = map.addTilesetImage('tileset', 'tiles');
 
         floor = map.createStaticLayer('floor', tiles, 0, 0);
@@ -194,6 +205,7 @@ var Main = new Phaser.Class({
 
         // Setting which tiles on the map should be enabled for collision
         floor.setCollisionBetween(1, 1);
+        floor.setCollisionBetween(34, 34);
         bricks.setCollisionBetween(2, 2);
         pipes.setCollisionBetween(265, 299);
         mushrooms.setCollisionBetween(25, 25);
@@ -398,6 +410,9 @@ var Main = new Phaser.Class({
             repeat: 400
         });
 
+        // Those are last because they overlap with other sprites and
+        // they are the most important ones for start and end game.
+        door = this.physics.add.staticSprite(76.5 * 64, 8.97 * 64, 'door');
         titleImage = this.add.image(640, 280, 'titleImage').setOrigin(0.5, 0.5);
     },
 
@@ -474,10 +489,52 @@ var Main = new Phaser.Class({
                 }
             });
 
+            this.physics.world.overlap(mario, flag, function(m, f) {
+                f.setVelocityY(300);
+
+                if (!caughtPole) {
+                    // The player gets a pop-up of his earned points
+                    var popup = _this.add.text(f.x - 70, f.y - 80, '5000')
+                        .setFontFamily('emulogic')
+                        .setFontSize(24).setColor('#ffffff');
+
+                    setTimeout(function () {
+                        popup.destroy();
+                    }, 600);
+
+                    score += 5000;
+                    updateScore();
+                }
+
+                // Prevent the overflow of score points
+                caughtPole = true;
+            });
+
+            this.physics.world.overlap(mario, pole, function(m, p) {
+                if (!caughtPole) {
+                    // The player gets a pop-up of his earned points
+                    var popup = _this.add.text(p.x - 70, p.y - 80, '2000')
+                        .setFontFamily('emulogic')
+                        .setFontSize(24).setColor('#ffffff');
+
+                    setTimeout(function () {
+                        popup.destroy();
+                    }, 600);
+
+                    score += 2000;
+                    updateScore();
+                }
+
+                caughtPole = true;
+            });
+
+            this.physics.world.overlap(mario, door, function() {
+                killedByHostile = true;
+            });
+
             // We are using overlap because collide stops the movement
             // while the former doesnt stop the player prematurely.
             this.physics.world.overlap(mario, coinsTilesGroup, function (mario, coin) {
-                // The player gets a pop-up of his earned points
                 var popup = _this.add.text(coin.x - 70, coin.y - 80, '200')
                     .setFontFamily('emulogic')
                     .setFontSize(24).setColor('#ffffff');
