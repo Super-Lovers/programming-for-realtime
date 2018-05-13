@@ -389,9 +389,10 @@ var Main = new Phaser.Class({
         this.anims.create(marioBigJumping);
 
         // Keys for character animations
-        keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-        keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-        keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+        keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
+        keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
+        keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
+        shift = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
 
         // Setup of the user interface
         // SCORE
@@ -700,10 +701,18 @@ var Main = new Phaser.Class({
                 }
             } else if (keyD.isDown) {
                 // Increase the player's velocity to move right
-                if (mario.body.velocity.x < 270) {
-                    mario.body.velocity.x += Math.floor(50);
+                if (shift.isDown) {
+                    if (mario.body.velocity.x < 370) {
+                        mario.body.velocity.x += Math.floor(50);
+                    } else {
+                        mario.body.velocity.x = Math.floor(380);
+                    }
                 } else {
-                    mario.body.velocity.x = Math.floor(270);
+                    if (mario.body.velocity.x < 270) {
+                        mario.body.velocity.x += Math.floor(50);
+                    } else {
+                        mario.body.velocity.x = Math.floor(270);
+                    }
                 }
 
                 mario.flipX = false;
@@ -713,10 +722,18 @@ var Main = new Phaser.Class({
                     mario.anims.play('marioWalkingAnimation', 1);
                 }
             } else if (keyA.isDown) {
-                if (mario.body.velocity.x > -270) {
-                    mario.body.velocity.x -= Math.floor(50);
+                if (shift.isDown) {
+                    if (mario.body.velocity.x > -370) {
+                        mario.body.velocity.x -= Math.floor(50);
+                    } else {
+                        mario.body.velocity.x = Math.floor(-380);
+                    }
                 } else {
-                    mario.body.velocity.x = Math.floor(-270);
+                    if (mario.body.velocity.x > -270) {
+                        mario.body.velocity.x -= Math.floor(50);
+                    } else {
+                        mario.body.velocity.x = Math.floor(-270);
+                    }
                 }
 
                 mario.flipX = true;

@@ -3,11 +3,47 @@
     padding: 0;
 }
 body {
+    font-family: pixelsix;
     margin: 60px auto 0 auto;
     width: 1280px;
     background: black;
+    color: white;
+    text-align: center;
 }
 @font-face {
     font-family: emulogic;
     src: url('../fonts/emulogic.ttf')
+}
+@font-face {
+    font-family: pixelsix;
+    src: url('../fonts/pixelsix00.ttf')
+}
+@font-face {
+    font-family: pixelsixHeading;
+    src: url('../fonts/pixelsix10.ttf')
+}
+header {
+    margin: 0 0 50px 0;
+}
+main  {
+    margin: 0 0 50px 0;
+}
+h1, h2 {
+    font-size: 36px;
+    font-family: pixelsixHeading;
+    margin: 0 0 10px 0;
+    letter-spacing: 1px;
+}
+p {
+    font-size: 18px;
+    margin: 0 0 35px 0;
+    letter-spacing: 0.8px;
+}
+p > span {
+    font-weight: bold;
+    font-family: pixelsixHeading;
+}
+img {
+    margin: 0 20px;
+    width: 80px;
 }
