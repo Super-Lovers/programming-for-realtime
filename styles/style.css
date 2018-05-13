@@ -3,12 +3,12 @@
     padding: 0;
 }
 body {
-    overflow-y: scroll;
+    overflow-y: scroll !important;
     font-family: pixelsix;
     margin: 40px auto 0 auto;
     padding: 0 0 40px 0;
     width: 1280px;
-    background: black;
+    background: #191970;
     color: white;
     text-align: center;
 }
@@ -45,6 +45,9 @@ p > span {
     font-weight: bold;
     font-family: pixelsixHeading;
 }
+a {
+    color: aqua;
+}
 div {
     margin: 0 auto 120px auto;
     width: 430px;
@@ -63,5 +66,8 @@ div > div {
 div > div:first-of-type {
     font-family: pixelsixHeading;
     font-size: 20px;
-    line-height: 50px;
+    line-height: 47px;
+}
+footer {
+    margin: 0 0 40px 0;
 }
