@@ -154,9 +154,16 @@ var Main = new Phaser.Class({
             endFrame: 2,
             spacing: 0
         });
+        this.load.spritesheet('bricksAnimation', 'assets/bricks/bricksAnimation.png', {
+            frameWidth: 48,
+            frameHeight: 64,
+            startFrame: 0,
+            endFrame: 2,
+            spacing: 0
+        });
 
-        this.load.image('squashedGoomba', 'assets/spritesheets/hostiles/squashedGoomba.png');
         // Hostiles spritesheet
+        this.load.image('squashedGoomba', 'assets/spritesheets/hostiles/squashedGoomba.png');
         this.load.spritesheet('goomba', 'assets/spritesheets/hostiles/goomba.png', {
             frameWidth: 48,
             frameHeight: 48,
@@ -231,6 +238,19 @@ var Main = new Phaser.Class({
         // Adding the character to the game
         // mario = this.add.sprite(256, 604, 'mario', 0);
         mario = this.physics.add.sprite(640, 620, 'mario').setOrigin(0.5, 0.5);
+
+        // Initiate the hostile goomba
+        var bricksBreaking = {
+            key: 'bricksBreakingAnimation',
+            frames: this.anims.generateFrameNumbers('bricksAnimation', {
+                start: 0,
+                end: 2
+            }),
+            frameRate: 6,
+            repeat: 0
+        };
+
+        this.anims.create(bricksBreaking);
 
         // Initiate the hostile goomba
         var goombaWalking = {
@@ -484,7 +504,22 @@ var Main = new Phaser.Class({
             var _this = this;
             this.physics.world.collide(mario, bricks, function(m, b) {
                 if (mario.body.blocked.up) {
+                    // Play the breaking sound effect
                     _this.sound.add('brick-smash').play();
+                    // Generate the broken bricks animation
+                    var flyingBricks = _this.physics.add.sprite(b.x * 64 + 32, b.y * 64,'bricksAnimation');
+                    flyingBricks.anims.play('bricksBreakingAnimation', 0);
+                    flyingBricks.rotation += 90;
+                    var leftOrRight = Math.floor(Math.random() * 10);
+                    if (leftOrRight > 5) {
+                        flyingBricks.setVelocity(100, -500);
+                    } else {
+                        flyingBricks.setVelocity(-100, -500);
+                    }
+
+                    setTimeout(function() {
+                        flyingBricks.destroy();
+                    }, 4500)
                     b.setVisible(false);
                     b.setCollision(false);
                 }
