@@ -13,8 +13,8 @@ var GameWinScene = new Phaser.Class({
         this.load.image('coins', 'assets/ui/coins-collected.png');
 
         // End-game audio
-        this.load.audio('gameover', 'assets/audio/smb_gameover.wav');
-        this.load.audio('stageclear', 'assets/audio/smb_stage_clear.wav');
+        this.load.audio('gameover', 'assets/audio/smb_gameover.mp3');
+        this.load.audio('stageclear', 'assets/audio/smb_stage_clear.mp3');
     },
 
     create() {

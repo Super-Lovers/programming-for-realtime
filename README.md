@@ -4,9 +4,9 @@
 
 This is a Super Mario Bros - NES prototype and only includes the first world's level (1-1). You begin the game by pressing *space* and when the timer reaches 0 you lose. The goal is to reach the end of the level without being defeated by hostiles or falling down the level from pits while gaining as much points as possible.
 
-## Graphics used in the game
+## Graphics and sound effects used
 
-The tiles for the map and the interactive graphics that I've used for the whole game can be found at https://www.spriters-resource.com/nes/supermariobros/
+The tiles for the map and the interactive graphics that I've used for the whole game can be found at https://www.spriters-resource.com/nes/supermariobros/. I also used the sound effects provided freely by TMK at https://themushroomkingdom.net/media/smb/wav to make the game more immersive.
 
 ## Preview
 

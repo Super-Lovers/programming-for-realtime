@@ -113,15 +113,15 @@ var Main = new Phaser.Class({
         this.load.audio('background-music', 'assets/audio/music/background-music.mp3');
 
         // Sound effects
-        this.load.audio('coin', 'assets/audio/smb_coin.wav');
-        this.load.audio('powerup-appears', 'assets/audio/smb_powerup_appears.wav');
-        this.load.audio('powerup', 'assets/audio/smb_powerup.wav');
-        this.load.audio('stomp', 'assets/audio/smb_stomp.wav');
-        this.load.audio('jump', 'assets/audio/smb_jump-small.wav');
-        this.load.audio('jump-super', 'assets/audio/smb_jump-super.wav');
-        this.load.audio('powerdown', 'assets/audio/smb_powerdown.wav');
-        this.load.audio('flag', 'assets/audio/smb_flagpole.wav');
-        this.load.audio('brick-smash', 'assets/audio/smb_breakblock.wav');
+        this.load.audio('coin', 'assets/audio/smb_coin.mp3');
+        this.load.audio('powerup-appears', 'assets/audio/smb_powerup_appears.mp3');
+        this.load.audio('powerup', 'assets/audio/smb_powerup.mp3');
+        this.load.audio('stomp', 'assets/audio/smb_stomp.mp3');
+        this.load.audio('jump', 'assets/audio/smb_jump-small.mp3');
+        this.load.audio('jump-super', 'assets/audio/smb_jump-super.mp3');
+        this.load.audio('powerdown', 'assets/audio/smb_powerdown.mp3');
+        this.load.audio('flag', 'assets/audio/smb_flagpole.mp3');
+        this.load.audio('brick-smash', 'assets/audio/smb_breakblock.mp3');
 
         // Character mario spritesheet
         this.load.spritesheet('mario', 'assets/spritesheets/mario.png', {
